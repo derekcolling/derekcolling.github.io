@@ -1,6 +1,6 @@
-# Maggie
+# Derek Colling
 
-A simple, elegant website built to demonstrate GitHub workflows and basic web development.
+A simple, elegant personal website built to demonstrate GitHub workflows and basic web development.
 
 ## Overview
 
@@ -29,12 +29,12 @@ To make this website live on GitHub Pages:
 3. Scroll down to "Pages" in the left sidebar
 4. Under "Source", select "main" branch
 5. Click "Save"
-6. Your site will be published at `https://[your-username].github.io/maggie/`
+6. Your site will be published at `https://derekcolling.github.io/`
 
 ## Project Structure
 
 ```
-maggie/
+derekcolling.github.io/
 ├── index.html      # Main HTML file
 ├── styles.css      # CSS styling
 └── README.md       # Project documentation
