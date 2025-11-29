@@ -1,4 +1,4 @@
-# Maggie
+# Derek
 
 A simple, elegant website built to demonstrate GitHub workflows and basic web development.
 
