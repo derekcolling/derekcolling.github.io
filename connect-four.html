@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connect Four Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .game-container {
+            text-align: center;
+        }
+
+        h1 {
+            color: white;
+            margin-bottom: 20px;
+            font-size: 2.5rem;
+        }
+
+        .board {
+            background: #EA5845;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            display: inline-block;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(7, 100px);
+            grid-template-rows: repeat(6, 100px);
+            gap: 15px;
+        }
+
+        .cell {
+            width: 100px;
+            height: 100px;
+            background: #F4E8D0;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cell:hover:not(.filled) {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .cell.filled {
+            cursor: not-allowed;
+        }
+
+        .cell.player1 {
+            background: #F4E8D0;
+        }
+
+        .cell.player2 {
+            background: #B85745;
+        }
+
+        .cell.winning {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        .controls {
+            margin-top: 30px;
+        }
+
+        .status {
+            color: white;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            min-height: 2rem;
+        }
+
+        .btn {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        @media (max-width: 900px) {
+            .grid {
+                grid-template-columns: repeat(7, 70px);
+                grid-template-rows: repeat(6, 70px);
+                gap: 10px;
+            }
+
+            .cell {
+                width: 70px;
+                height: 70px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .grid {
+                grid-template-columns: repeat(7, 50px);
+                grid-template-rows: repeat(6, 50px);
+                gap: 8px;
+            }
+
+            .cell {
+                width: 50px;
+                height: 50px;
+            }
+
+            .board {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Connect Four</h1>
+        <div class="controls">
+            <div class="status" id="status">Player 1's Turn</div>
+            <button class="btn" onclick="resetGame()">New Game</button>
+        </div>
+        <div class="board">
+            <div class="grid" id="grid"></div>
+        </div>
+    </div>
+
+    <script>
+        const ROWS = 6;
+        const COLS = 7;
+        let board = [];
+        let currentPlayer = 1;
+        let gameOver = false;
+
+        function initBoard() {
+            board = Array(ROWS).fill(null).map(() => Array(COLS).fill(0));
+            currentPlayer = 1;
+            gameOver = false;
+            renderBoard();
+            updateStatus();
+        }
+
+        function renderBoard() {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = row;
+                    cell.dataset.col = col;
+
+                    if (board[row][col] === 1) {
+                        cell.classList.add('filled', 'player1');
+                    } else if (board[row][col] === 2) {
+                        cell.classList.add('filled', 'player2');
+                    }
+
+                    cell.addEventListener('click', () => handleCellClick(col));
+                    grid.appendChild(cell);
+                }
+            }
+        }
+
+        function handleCellClick(col) {
+            if (gameOver) return;
+
+            // Find the lowest empty row in this column
+            let row = -1;
+            for (let r = ROWS - 1; r >= 0; r--) {
+                if (board[r][col] === 0) {
+                    row = r;
+                    break;
+                }
+            }
+
+            if (row === -1) return; // Column is full
+
+            // Place the piece
+            board[row][col] = currentPlayer;
+            renderBoard();
+
+            // Check for win
+            if (checkWin(row, col)) {
+                gameOver = true;
+                updateStatus(`Player ${currentPlayer} wins!`);
+                highlightWinningCells();
+                return;
+            }
+
+            // Check for draw
+            if (isBoardFull()) {
+                gameOver = true;
+                updateStatus("It's a draw!");
+                return;
+            }
+
+            // Switch player
+            currentPlayer = currentPlayer === 1 ? 2 : 1;
+            updateStatus();
+        }
+
+        function checkWin(row, col) {
+            const player = board[row][col];
+
+            // Check horizontal
+            if (checkDirection(row, col, 0, 1, player)) return true;
+            // Check vertical
+            if (checkDirection(row, col, 1, 0, player)) return true;
+            // Check diagonal (down-right)
+            if (checkDirection(row, col, 1, 1, player)) return true;
+            // Check diagonal (down-left)
+            if (checkDirection(row, col, 1, -1, player)) return true;
+
+            return false;
+        }
+
+        function checkDirection(row, col, dRow, dCol, player) {
+            let count = 1;
+
+            // Check in positive direction
+            let r = row + dRow;
+            let c = col + dCol;
+            while (r >= 0 && r < ROWS && c >= 0 && c < COLS && board[r][c] === player) {
+                count++;
+                r += dRow;
+                c += dCol;
+            }
+
+            // Check in negative direction
+            r = row - dRow;
+            c = col - dCol;
+            while (r >= 0 && r < ROWS && c >= 0 && c < COLS && board[r][c] === player) {
+                count++;
+                r -= dRow;
+                c -= dCol;
+            }
+
+            return count >= 4;
+        }
+
+        function highlightWinningCells() {
+            // Find and highlight winning sequence
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
+                    if (board[row][col] === currentPlayer) {
+                        if (isPartOfWinningSequence(row, col)) {
+                            const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                            cell.classList.add('winning');
+                        }
+                    }
+                }
+            }
+        }
+
+        function isPartOfWinningSequence(row, col) {
+            const player = board[row][col];
+            const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
+
+            for (const [dRow, dCol] of directions) {
+                let count = 1;
+                let r = row + dRow;
+                let c = col + dCol;
+                while (r >= 0 && r < ROWS && c >= 0 && c < COLS && board[r][c] === player) {
+                    count++;
+                    r += dRow;
+                    c += dCol;
+                }
+                r = row - dRow;
+                c = col - dCol;
+                while (r >= 0 && r < ROWS && c >= 0 && c < COLS && board[r][c] === player) {
+                    count++;
+                    r -= dRow;
+                    c -= dCol;
+                }
+                if (count >= 4) return true;
+            }
+            return false;
+        }
+
+        function isBoardFull() {
+            return board[0].every(cell => cell !== 0);
+        }
+
+        function updateStatus(message) {
+            const status = document.getElementById('status');
+            if (message) {
+                status.textContent = message;
+            } else {
+                status.textContent = `Player ${currentPlayer}'s Turn`;
+            }
+        }
+
+        function resetGame() {
+            initBoard();
+        }
+
+        // Initialize the game
+        initBoard();
+    </script>
+</body>
+</html>
